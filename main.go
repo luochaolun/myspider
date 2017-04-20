@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"os/signal"
 	"path"
 	"regexp"
 	"runtime"
@@ -33,9 +34,10 @@ type Article struct {
 }
 
 var (
-	chArtCls = make(chan *ArtClass, 2)
-	chArts   = make(chan *Article, 50)
-	db       *sql.DB
+	chArtCls   = make(chan *ArtClass, 2)
+	chArts     = make(chan *Article, 50)
+	db         *sql.DB
+	signalChan = make(chan os.Signal, 1)
 )
 
 func init() {
@@ -285,5 +287,11 @@ func main() {
 	go run()
 	go getMoreXS()
 
-	select {}
+	go func() {
+		signal.Notify(signalChan, os.Interrupt, os.Kill)
+	}()
+
+	//select {}
+	<-signalChan
+	fmt.Println("结束退出")
 }
